@@ -147,23 +147,28 @@ namespace Falcor
         if (mUsePreGenDepth == false) pContext->clearDsv(pRenderData->getTexture(kDepth)->getDSV().get(), 1, 0);
     }
 
-    void ForwardLightingPass::execute(RenderContext* pContext, const RenderData* pRenderData)
+    void ForwardLightingPass::execute(RenderContext* pContext, Texture::SharedPtr& visibilityTexture, Fbo::SharedPtr& pTargetFbo)
     {
-        initDepth(pRenderData);
-        initFbo(pContext, pRenderData);
-
         if (mpSceneRenderer)
         {
-            mpVars["PerFrameCB"]["gRenderTargetDim"] = vec2(mpFbo->getWidth(), mpFbo->getHeight());
-            mpVars->setTexture(kVisBuffer, pRenderData->getTexture(kVisBuffer));
+            mpVars["PerFrameCB"]["gRenderTargetDim"] = vec2(pTargetFbo->getWidth(), pTargetFbo->getHeight());
+            mpVars->setTexture(kVisBuffer, visibilityTexture);
 
-            mpState->setFbo(mpFbo);
+            mpState->pushFbo(pTargetFbo);
             pContext->pushGraphicsState(mpState);
             pContext->pushGraphicsVars(mpVars);
             mpSceneRenderer->renderScene(pContext);
             pContext->popGraphicsState();
             pContext->popGraphicsVars();
+            mpState->popFbo();
         }
+    }
+
+    void ForwardLightingPass::execute(RenderContext* pContext, const RenderData* pRenderData)
+    {
+        initDepth(pRenderData);
+        initFbo(pContext, pRenderData);
+        execute(pContext, pRenderData->getTexture(kVisBuffer), mpFbo);
     }
 
     void ForwardLightingPass::renderUI(Gui* pGui, const char* uiGroup)
