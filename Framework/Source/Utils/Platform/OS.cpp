@@ -59,6 +59,7 @@ namespace Falcor
         std::string(getWorkingDirectory()),
         std::string(getWorkingDirectory() + "/Data"),
         std::string(_PROJECT_DIR_) + "/ShadingUtils",
+        std::string(_PROJECT_DIR_) + "/Data",
         std::string(getExecutableDirectory()),
         std::string(getExecutableDirectory() + "/Data"),
 

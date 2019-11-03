@@ -88,7 +88,7 @@ float4 integrateSpecularLD(float3 V, float3 N, float roughness)
     {
         float2 u = getHammersley(i, gSampleCount);
         float3 H = getGGXMicrofacet(u, N, roughness);
-        float3 L = reflect(-N, H);
+        float3 L = reflect(-V, H);
         float NdotL = dot(N, L);
 
         if(NdotL > 0)
@@ -129,7 +129,7 @@ float4 integrateDFG(float3 N, float3 V, float roughness)
 
         // Specular GGX DFG integration (stored in RG)
         float3 H = getGGXMicrofacet(u, N, roughness);
-        float3 L = reflect(-N, H);
+        float3 L = reflect(-V, H);
         float NdotH = saturate(dot(N, H));
         float LdotH = saturate(dot(L, H));
         float NdotL = saturate(dot(N, L));
