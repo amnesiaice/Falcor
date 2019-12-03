@@ -4,13 +4,13 @@ const std::string PlayGround::skDefaultModel = "Arcade/Arcade.fbx";
 
 CameraController& PlayGround::getActiveCameraController()
 {
-    return mFirstPersonCameraController;
+    return mModelViewCameraController;
 }
 
 void PlayGround::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
 {
     mpCamera = Camera::create();
-    mpProgram = GraphicsProgram::createFromFile("ModelViewer.ps.hlsl", "", "main");
+    mpProgram = GraphicsProgram::createFromFile("PlayGround.ps.hlsl", "", "main");
 
     mModelViewCameraController.attachCamera(mpCamera);
     mFirstPersonCameraController.attachCamera(mpCamera);
@@ -33,9 +33,20 @@ void PlayGround::onLoad(SampleCallbacks* pSample, RenderContext* pRenderContext)
 
     //load model
     mpModel = Model::createFromFile(skDefaultModel.c_str(), Model::LoadFlags::None);
+    if (mpModel == nullptr)
+    {
+        msgBox("Could not load model");
+        return;
+    }
+    resetCamera();
 
+    float radius = mpModel->getRadius();
+    float lightHeight = max(1.0f + radius, radius * 1.25f);
+    mpPointLight->setWorldPosition(glm::vec3(0, lightHeight, 0));
 
     mpModel->bindSamplerToMaterials(mUseTriLinearFiltering ? mpLinearSampler : mpPointSampler);
+
+    resetCamera();
 }
 
 void PlayGround::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo)
@@ -46,8 +57,8 @@ void PlayGround::onFrameRender(SampleCallbacks* pSample, RenderContext* pRenderC
 
     if (mpModel)
     {
-        mpCamera->setDepthRange(0.1f, mpModel->getRadius()*10.0f);
-        mFirstPersonCameraController.update();
+        mpCamera->setDepthRange(mNearZ, mFarZ);
+        getActiveCameraController().update();
 
         mpProgramVars["PerFrameCB"]["gConstColor"] = false;
 
@@ -70,7 +81,13 @@ bool PlayGround::onKeyEvent(SampleCallbacks* pSample, const KeyboardEvent& keyEv
     {
         if (keyEvent.type == KeyboardEvent::Type::KeyPressed)
         {
-
+            switch (keyEvent.key)
+            {
+            case KeyboardEvent::Key::R:
+                resetCamera();
+                bHandled = true;
+                break;
+            }
         }
     }
     return bHandled;
@@ -80,6 +97,31 @@ bool PlayGround::onMouseEvent(SampleCallbacks* pSample, const MouseEvent& mouseE
 {
     return getActiveCameraController().onMouseEvent(mouseEvent);
 }
+
+void PlayGround::resetCamera()
+{
+    if (mpModel)
+    {
+        // update the camera position
+        float Radius = mpModel->getRadius();
+        const glm::vec3& ModelCenter = mpModel->getCenter();
+        glm::vec3 CamPos = ModelCenter;
+        CamPos.z += Radius * 5;
+
+        mpCamera->setPosition(CamPos);
+        mpCamera->setTarget(ModelCenter);
+        mpCamera->setUpVector(glm::vec3(0, 1, 0));
+
+        // Update the controllers
+        mModelViewCameraController.setModelParams(ModelCenter, Radius, 3.5f);
+        mFirstPersonCameraController.setCameraSpeed(Radius * 0.25f);
+        m6DoFCameraController.setCameraSpeed(Radius * 0.25f);
+
+        mNearZ = std::max(0.1f, mpModel->getRadius() / 750.0f);
+        mFarZ = Radius * 10;
+    }
+}
+
 
 #ifdef _WIN32
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)

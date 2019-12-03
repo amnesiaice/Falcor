@@ -13,6 +13,7 @@ public:
     bool onKeyEvent(SampleCallbacks* pSample, const KeyboardEvent& keyEvent) override;
     bool onMouseEvent(SampleCallbacks* pSample, const MouseEvent& mouseEvent) override;
 
+    void resetCamera();
 private:
     Camera::SharedPtr mpCamera;
     RasterizerState::SharedPtr mpWireframeRS = nullptr;
@@ -34,4 +35,6 @@ private:
     GraphicsVars::SharedPtr mpProgramVars = nullptr;
     GraphicsState::SharedPtr mpGraphicsState = nullptr;
     CameraController& getActiveCameraController();
+    float mNearZ;
+    float mFarZ;
 };
