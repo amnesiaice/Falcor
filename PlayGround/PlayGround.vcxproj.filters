@@ -31,5 +31,8 @@
     <FxCompile Include="Data\PlayGround.ps.hlsl">
       <Filter>Data</Filter>
     </FxCompile>
+    <FxCompile Include="Data\PlayGround.rt.hlsl">
+      <Filter>Data</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
